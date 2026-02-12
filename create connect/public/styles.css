@@ -1,0 +1,43 @@
+/* Navigation */
+.nav-link {
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    transform: translateY(-2px);
+}
+
+/* Exchange Cards */
+.exchange-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.exchange-card:hover {
+    border-color: #8b5cf6;
+    box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.3);
+}
+
+/* Points Animation */
+@keyframes point-gain {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.point-gain {
+    animation: point-gain 0.5s ease;
+}
+
+/* Loading States */
+.loading {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
