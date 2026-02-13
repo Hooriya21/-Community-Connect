@@ -1,7 +1,8 @@
-/* create connect/server/server.js - Corrected Version */
+/* server/server.js - Completely Fixed Version */
 const express = require('express');
 const cors = require('cors');
-const path = require('path'); // Added path module
+const path = require('path');
+const fetch = require('node-fetch'); // Moved to top with other imports
 require('dotenv').config();
 
 const app = express();
@@ -9,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 // Use absolute path for reliability
-app.use(express.static(path.join(__dirname, '../public'))); 
+app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
 
 let exchanges = [
@@ -32,34 +33,46 @@ app.get('/api/match/:userId', (req, res) => {
     res.json(matches);
 });
 
+// AI Skill Analysis endpoint
+app.post('/api/analyze-skill', async (req, res) => {
+    try {
+        const response = await fetch(
+            "https://api-inference.huggingface.co/models/facebook/bart-large-mnli",
+            {
+                headers: { 
+                    Authorization: `Bearer ${process.env.HF_TOKEN}` 
+                },
+                method: "POST",
+                body: JSON.stringify({
+                    inputs: req.body.text,
+                    parameters: { 
+                        candidate_labels: ["repair", "education", "gardening", "cooking", "tech"] 
+                    }
+                }),
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error(`API responded with status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log("AI Analysis Result:", result);
+        res.json(result);
+        
+    } catch (error) {
+        console.error("AI Analysis failed:", error);
+        // Return a fallback response so registration still works
+        res.status(200).json({ 
+            labels: ["general"],
+            scores: [1.0],
+            error: "AI service unavailable, using default category"
+        });
+    }
+});
+
+// Start the server
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    // Fix for default Leaflet marker icons not loading
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-});
-
-
-// Add this to your server.js
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
-app.post('/api/analyze-skill', async (req, res) => {
-    const response = await fetch(
-        "https://api-inference.huggingface.co/models/facebook/bart-large-mnli",
-        {
-            headers: { Authorization: `Bearer ${process.env.HF_TOKEN}` },
-            method: "POST",
-            body: JSON.stringify({
-                inputs: req.body.text,
-                parameters: { candidate_labels: ["repair", "education", "gardening", "tech"] }
-            }),
-        }
-    );
-    const result = await response.json();
-    console.log(result)
-    res.json(result);
+    console.log(`📁 Serving static files from: ${path.join(__dirname, '../public')}`);
 });
